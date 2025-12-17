@@ -1,59 +1,51 @@
-# ✅ MantleYield MVP – Role-Based Checklist (PM View)
+# ✅ MantleYield MVP – Role-Based Task Board (Final, Locked)
 
-**Context:** Hackathon MVP · 14 days · No off-chain backend · Operator-triggered Rebalance  
-**Goal:** Demonstrate **real on-chain capital routing** with zero mock, zero fake yield.
-
----
-
-## 👨‍💻 1️⃣ Core Dev / Lead Developer (On-chain Owner)
-
-### A. Pre-Implementation (Day 1–2)
-- [ ] Select **real DeFi protocol** on Mantle testnet
-- [ ] Confirm **demo ERC-20 asset**
-- [ ] Draw capital flow diagram:
-  - Vault → Strategy A
-  - Vault → Idle Strategy
-- [ ] Finalize:
-  - Operator address
-  - Allocation caps / limits
+**Context:** Hackathon MVP · Infrastructure-grade DeFi primitive  
+**Core Principle:** Real on-chain capital routing · Zero mock · Zero fake yield  
+**Architecture Status:** ✅ Finalized & frozen  
+**Backend:** ❌ None (Blockchain = backend)
 
 ---
 
-### B. Smart Contract Implementation (Day 3–8)
+## 👨‍💻 1️⃣ Bảo — Core Dev / Lead Smart Contract Engineer  
+*(CTO · Architect · PM · Tech Lead — roles already completed, now 100% execution)*
+
+### A. Smart Contract Implementation (Core Responsibility)
 
 #### ERC-4626 Vault
-- [ ] Implement `deposit()`
-- [ ] Implement `withdraw()`
-- [ ] Ensure `totalAssets()` reflects **real balances**
-- [ ] Manage per-strategy allocations
-- [ ] Operator-only `rebalance()`
-- [ ] `pauseDeposit`, `pauseRebalance`
-- [ ] Withdraw must work **even when paused**
+- [ ] Implement `deposit()` (ERC-20 → shares)
+- [ ] Implement `withdraw()` (shares → ERC-20)
+- [ ] Ensure `totalAssets()` reflects **real on-chain balances**
+- [ ] Maintain per-strategy allocation mapping
+- [ ] Operator-only `rebalance()` (real asset movement)
+- [ ] `pauseDeposit()` and `pauseRebalance()`
+- [ ] **Withdraw must always work**, even when paused
 
-#### Strategy Adapters
+#### Strategy System
 - [ ] Define `IStrategyAdapter` interface
-- [ ] Strategy A (real protocol):
-  - [ ] Deposit into protocol
-  - [ ] Withdraw from protocol
-  - [ ] Read real balance
+- [ ] Strategy A (Real DeFi protocol on Mantle):
+  - [ ] Supply ERC-20 into protocol
+  - [ ] Withdraw ERC-20 from protocol
+  - [ ] Read real balance from protocol
 - [ ] Idle Strategy:
-  - [ ] Keep funds in vault
-  - [ ] No yield, no simulation
+  - [ ] Hold funds inside vault
+  - [ ] No yield
+  - [ ] No simulation
 
 ---
 
-### C. Safety & Edge Cases (Day 9–11)
-- [ ] Allowance / approval checks
-- [ ] Reentrancy protection (if needed)
+### B. Safety & Fail Paths (Mandatory)
+- [ ] Allowance & approval checks
+- [ ] Reentrancy protection (if applicable)
 - [ ] Rebalance exceeding cap → revert
-- [ ] Strategy revert → no asset loss
-- [ ] Withdraw when funds are deployed
+- [ ] Strategy revert → no state update, no asset loss
+- [ ] Withdraw works when assets are deployed in strategy
 
 ---
 
-### D. Deployment & Verification (Day 11–12)
-- [ ] Deploy vault + strategies to Mantle testnet
-- [ ] Verify contracts on Mantlescan
+### C. Deployment & Verification
+- [ ] Deploy vault and strategies to Mantle testnet
+- [ ] Verify all contracts on Mantlescan
 - [ ] Record:
   - Vault address
   - Strategy addresses
@@ -61,68 +53,103 @@
 
 ---
 
-### E. Demo Readiness (Day 13–14)
+### D. Demo Readiness
 - [ ] Prepare demo transactions:
   - Deposit
   - Rebalance
   - Withdraw
-- [ ] Dry-run full demo 2–3 times
+- [ ] Dry-run full demo multiple times
+- [ ] Code freeze before submission
 
 ---
 
-## 🎨 2️⃣ Intern Dev – Frontend
+## 🎨 2️⃣ Thiên — Frontend Engineer / UI-UX Designer  
+*(No onboarding · No learning phase · Official implementation only)*
 
-### A. Setup (Day 3–4)
-- [ ] Initialize Vite + React
-- [ ] Wallet connection (MetaMask / compatible)
-- [ ] Configure:
-  - Chain ID
-  - Vault address
-  - ABI
-
----
-
-### B. Core UI (Day 5–9)
-- [ ] Deposit form
-- [ ] Withdraw form
-- [ ] Display:
-  - `totalAssets`
-  - Allocation per strategy
-- [ ] Clear labels:
-  - “Real Lending Strategy”
-  - “Idle Strategy (No Yield)”
-
----
-
-### C. Rebalance UI (Day 9–10)
-- [ ] **Rebalance** button
-- [ ] Visible only if `connectedAddress == operator`
-- [ ] Display transaction hash after execution
-
----
-
-### D. Polish & Demo (Day 11–14)
-- [ ] Minimal UI (no charts)
-- [ ] Basic loading & error states
-- [ ] Test full flow:
+### A. UI/UX Design (Figma — MUST be first)
+- [ ] Design **desktop-first UI** in Figma
+- [ ] Define **user flows** aligned with PM-READY:
   - Deposit → Rebalance → Withdraw
-- [ ] Prepare live demo URL
+- [ ] Design **Vault Overview Screen**
+  - totalAssets
+  - user shares
+  - strategy allocation
+- [ ] Design **Deposit / Withdraw interactions**
+- [ ] Design **Rebalance UI (Operator-only)**
+- [ ] Design **State UI**:
+  - Idle
+  - Strategy A active
+  - Paused
+- [ ] Review & approve design with Core Dev
 
 ---
 
-## 🧪 3️⃣ Intern Dev – Infra / Deployment & Testing  
-*(No off-chain backend)*
+### B. Frontend Implementation (React + Vite)
+- [ ] Initialize frontend project (official stack)
+- [ ] Wallet connection (MetaMask / EVM compatible)
+- [ ] Configure:
+  - Mantle testnet
+  - Vault address
+  - Contract ABIs
 
-### A. Environment & Setup (Day 1–3)
-- [ ] Configure Mantle testnet
+---
+
+### C. Core Functional Integration
+- [ ] Implement `deposit()` call (ERC-4626)
+- [ ] Implement `withdraw()` call
+- [ ] Read-only data:
+  - `totalAssets`
+  - user shares
+- [ ] Display **strategy allocation**
+  - Explicit labels:
+    - “Real DeFi Strategy”
+    - “Idle Strategy (No Yield)”
+- [ ] Implement **Rebalance button**
+  - Visible only if `connectedAddress == operator`
+- [ ] Display transaction hash after each action
+
+---
+
+### D. UX Rules (Strict)
+- [ ] No charts
+- [ ] No APY
+- [ ] No simulated metrics
+- [ ] Clear wording to avoid “fake yield” misunderstanding
+- [ ] Minimal UI, infrastructure-style
+
+---
+
+### E. Demo Lock
+- [ ] Full flow test: Deposit → Rebalance → Withdraw
+- [ ] UI freeze before demo
+- [ ] Frontend acts as **on-chain inspector + tx trigger**
+
+---
+
+## 🧪 3️⃣ Cảnh — Infra / Deployment / On-chain Verification Engineer  
+*(No backend · No indexer · No off-chain services)*
+
+### A. Deployment Infrastructure
+- [ ] Configure Mantle testnet (RPC, chainId)
 - [ ] Prepare deployer wallet
-- [ ] Verify demo token availability
+- [ ] Prepare demo ERC-20 asset
 
 ---
 
-### B. Flow Testing (Day 6–10)
+### B. Contract Deployment
+- [ ] Prepare Hardhat deployment scripts
+- [ ] Deploy:
+  - MantleYieldVault
+  - Strategy A (real protocol)
+  - Idle Strategy
+- [ ] Wire vault ↔ strategies (allocation config)
+- [ ] Verify all contracts on Mantlescan
+
+---
+
+### C. On-chain Flow Testing (Evidence-driven)
 - [ ] Test deposit when:
-  - Vault is idle
+  - Funds are idle
   - Funds are deployed
 - [ ] Test withdraw:
   - Full withdrawal
@@ -133,7 +160,7 @@
 
 ---
 
-### C. Fail Case Validation (Day 9–11)
+### D. Fail Path Validation (Mandatory)
 - [ ] Strategy revert → no asset loss
 - [ ] Rebalance beyond cap → revert
 - [ ] Pause behavior:
@@ -142,78 +169,77 @@
 
 ---
 
-### D. Demo Evidence (Day 12–14)
-- [ ] Collect:
-  - Transaction hashes
+### E. Demo Evidence
+- [ ] Record transaction hashes:
+  - Deposit
+  - Rebalance
+  - Withdraw
+- [ ] Prepare **Demo Evidence Sheet**
   - Explorer links
-- [ ] Prepare tx list for PM demo
+  - Clear before/after balances
+- [ ] Support live demo with Mantlescan
 
 ---
 
-## 💼 4️⃣ Business Developer (Pitch & Q&A Owner)
+## 💼 4️⃣ Hiếu — Business Developer (Pitch & Q&A Owner)
 
-### A. Narrative & Slides (Day 3–8)
-- [ ] Problem:
-  - Fragmented DeFi capital on Mantle
-- [ ] Solution:
+### A. Narrative & Positioning
+- [ ] Define problem:
+  - Fragmented capital on Mantle
+- [ ] Define solution:
   - ERC-4626 vault + real strategies
-- [ ] Mantle fit:
+- [ ] Clarify positioning:
+  - Infrastructure ≠ Yield farming app
+- [ ] Explain Mantle fit:
   - Low gas → efficient rebalancing
-- [ ] Clarify:
-  - MVP ≠ APY competition
 
 ---
 
-### B. Q&A Preparation (Day 9–12)
+### B. Judge Q&A Preparation
 - [ ] “Why no automation?”
 - [ ] “Why no backend?”
 - [ ] “Why ERC-4626?”
 - [ ] “Why not Yearn?”
+- [ ] “Where is the real value?”
 
 ---
 
-### C. Demo Script (Day 13–14)
-- [ ] 3–5 minute pitch script
+### C. Demo Script
+- [ ] 3–5 minute pitch
 - [ ] Emphasize:
   - Real capital movement
   - On-chain proof
-  - Infrastructure-first mindset
+  - Composability-first design
 
 ---
 
-## 🧭 5️⃣ Project Manager / Project Owner
+## 🧭 5️⃣ Project Owner / PM (Scope Guardian)
 
 ### A. Scope Control (Continuous)
-- [ ] Reject tasks involving:
+- [ ] Reject any task involving:
   - Mock data
   - Fake yield
-  - Backend services
-- [ ] Reinforce principle:
+  - Off-chain backend
+- [ ] Enforce principle:
   - “Blockchain is the backend”
 
 ---
 
-### B. Sync & Review
-- [ ] Daily progress check
-- [ ] Verify no scope drift
-- [ ] Review demo flow every 2–3 days
-
----
-
-### C. Final Gate (Day 14)
+### B. Final Gate
 - [ ] End-to-end demo runs smoothly
 - [ ] All transactions verifiable on-chain
-- [ ] No dependency outside:
+- [ ] No hidden dependency outside:
   - Smart contracts
   - Frontend
 
 ---
 
-## 🎯 PM FINAL NOTE
+## 🎯 FINAL NOTE
 
-If all items above are checked ✅  
-→ MantleYield MVP **passes hackathon-grade infrastructure standards**  
-→ No risk of being flagged for mock, fake, or hidden centralization
+If all tasks above are completed:
+
+✅ MantleYield qualifies as **infrastructure-grade DeFi MVP**  
+✅ No risk of being flagged for mock, fake, or misleading demo  
 
 **Principle:**  
-> *Minimum components, maximum on-chain truth.*
+> *Minimum components. Maximum on-chain truth.*
