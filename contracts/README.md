@@ -1,57 +1,174 @@
-# Sample Hardhat 3 Beta Project (`node:test` and `viem`)
+# MantleYield Smart Contracts
 
-This project showcases a Hardhat 3 Beta project using the native Node.js test runner (`node:test`) and the `viem` library for Ethereum interactions.
+## Overview
 
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+MantleYield is a composable yield router implemented as an ERC-4626 tokenized vault with modular strategy adapters. It enables users to deposit assets (USDC) and earn yield across multiple DeFi protocols on Mantle Network.
 
-## Project Overview
+## Architecture
 
-This example project includes:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MantleYieldVault                          │
+│                     (ERC-4626)                               │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────────┐   │
+│  │deposit()│ │withdraw│ │totalAsset│ │  rebalance()    │   │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────────────┘   │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                [IStrategyAdapter]
+                         │
+        ┌────────────────┴────────────────┐
+        │                                 │
+┌───────▼────────┐              ┌────────▼────────┐
+│ IdleStrategy   │              │ LendingStrategy │
+│ (0% baseline)  │              │ (Real protocol) │
+└────────────────┘              └─────────────────┘
+```
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using [`node:test`](nodejs.org/api/test.html), the new Node.js native test runner, and [`viem`](https://viem.sh/).
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+## Contracts
 
-## Usage
+### Core Contracts
 
-### Running Tests
+- **MantleYieldVault.sol** - ERC-4626 compliant vault with strategy routing
+- **IStrategyAdapter.sol** - Standard interface for all strategies
+- **IdleStrategy.sol** - Baseline strategy (holds assets, 0% yield)
 
-To run all the tests in the project, execute the following command:
+### Supporting Contracts
 
-```shell
+- **MockERC20.sol** - Mock USDC for testing
+
+## Key Features
+
+✅ **ERC-4626 Standard** - Full compliance for maximum composability  
+✅ **Modular Strategies** - Plug-and-play strategy adapters  
+✅ **Real Integration** - No mocks, no fake yield  
+✅ **Pausable** - Emergency pause (except withdrawals)  
+✅ **Access Control** - Owner and Operator roles  
+✅ **Allocation Caps** - Per-strategy limits  
+✅ **Invariant Checks** - Asset conservation guaranteed  
+
+## Critical Invariants
+
+1. **Asset Conservation**: `totalAssets() == sum(strategies) + idle`
+2. **Withdrawal Availability**: Withdrawals NEVER blocked (even when paused)
+3. **Rebalance Conservation**: Total assets unchanged during rebalance
+4. **Share Redemption**: Shares always redeemable for proportional assets
+
+## Development
+
+### Prerequisites
+
+```bash
+# Install dependencies (requires Node.js and npm)
+npm install
+```
+
+### Environment Setup
+
+1. Copy `.env.example` to `.env`
+2. Fill in your private key and RPC URLs
+
+```bash
+cp .env.example .env
+```
+
+### Compile Contracts
+
+```bash
+npx hardhat compile
+```
+
+### Run Tests
+
+```bash
 npx hardhat test
 ```
 
-You can also selectively run the Solidity or `node:test` tests:
+### Deploy to Mantle Sepolia
 
-```shell
-npx hardhat test solidity
-npx hardhat test nodejs
+```bash
+npx hardhat run scripts/deploy.ts --network mantleSepolia
 ```
 
-### Make a deployment to Sepolia
+## Network Configuration
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
+### Mantle Sepolia Testnet
 
-To run the deployment to a local chain:
+- **Chain ID**: 5003
+- **RPC URL**: https://rpc.sepolia.mantle.xyz/
+- **Explorer**: https://sepolia.mantlescan.xyz
+- **Currency**: MNT
 
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
+## Security
+
+### Anti-Mock Rules
+
+🚫 **PROHIBITED**:
+- Fake yield calculations
+- Simulated balances
+- Mock protocol interactions
+- Time-based yield simulation
+
+✅ **ALLOWED**:
+- Idle strategy (0% yield is real)
+- Manual rebalancing
+- Single strategy for MVP
+- Testnet deployment
+
+### Access Control
+
+| Role | Permissions |
+|------|-------------|
+| **Owner** | Add/remove strategies, set operator, unpause |
+| **Operator** | Rebalance, pause |
+| **User** | Deposit, withdraw, redeem |
+
+### Pause Mechanism
+
+When paused:
+- ❌ Deposits blocked
+- ❌ Rebalancing blocked
+- ✅ **Withdrawals ALWAYS work**
+
+## Testing
+
+### Unit Tests
+
+- IdleStrategy functionality
+- Vault deposit/withdraw flows
+- Rebalance mechanism
+- Pause functionality
+- Access control
+- Invariant checks
+
+### Integration Tests
+
+- Full deposit → rebalance → withdraw flow
+- Multi-strategy withdrawal
+- Strategy failure scenarios
+- Emergency pause scenarios
+
+## Deployment
+
+### Deployed Contracts (Mantle Sepolia)
+
+See `deployments/` directory for latest deployment addresses.
+
+### Verification
+
+Verify contracts on Mantle Explorer:
+
+```bash
+npx hardhat verify --network mantleSepolia <CONTRACT_ADDRESS> <CONSTRUCTOR_ARGS>
 ```
 
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
+## License
 
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
+MIT
 
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
+## Documentation
 
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
-
-After setting the variable, you can run the deployment with the Sepolia network:
-
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+For detailed technical documentation, see:
+- [Core Technical Thesis](../.memory-bank/docs/principal-engineer/CORE_TECHNICAL_THESIS.md)
+- [Solution Architecture](../.memory-bank/docs/solution-architect/SOLUTION_ARCHITECTURE.md)
+- [Core Flows](../.memory-bank/docs/solution-architect/CORE_FLOW.md)

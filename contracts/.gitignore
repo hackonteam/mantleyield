@@ -18,3 +18,10 @@
 
 # Hardhat coverage reports
 /coverage
+
+# Environment variables (contains sensitive data)
+.env
+
+# Deployment records
+/deployments
+
