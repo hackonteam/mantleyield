@@ -1,5 +1,7 @@
 import hre from "hardhat";
-import { parseUnits } from "viem";
+import { parseUnits, formatUnits } from "viem";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Deployment script for MantleYield on Mantle Sepolia
@@ -19,14 +21,14 @@ async function main() {
 
     // Get deployer balance
     const balance = await publicClient.getBalance({ address: deployer.account.address });
-    console.log("💰 Deployer balance:", balance.toString(), "wei\n");
+    console.log("💰 Deployer balance:", formatUnits(balance, 18), "MNT\n");
 
     // USDC address on Mantle Sepolia
     // TODO: Update with actual Mantle Sepolia USDC address
     // For now, we'll deploy a mock USDC for testing
     const USDC_ADDRESS = process.env.MANTLE_SEPOLIA_USDC_ADDRESS || "";
 
-    let usdcAddress = USDC_ADDRESS;
+    let usdcAddress: `0x${string}` = USDC_ADDRESS as `0x${string}`;
 
     // If no USDC address provided, deploy a mock ERC20 for testing
     if (!usdcAddress) {
@@ -43,9 +45,24 @@ async function main() {
         console.log("✅ MockUSDC deployed at:", usdcAddress);
 
         // Mint some tokens to deployer for testing
+        console.log("⏳ Minting 1,000,000 USDC to deployer...");
         const mintAmount = parseUnits("1000000", 6); // 1M USDC
-        await mockUSDC.write.mint([deployer.account.address, mintAmount]);
-        console.log("✅ Minted 1,000,000 USDC to deployer\n");
+        const mintTx = await mockUSDC.write.mint([deployer.account.address, mintAmount]);
+
+        // Wait for transaction with longer timeout for testnet
+        console.log("⏳ Waiting for mint transaction confirmation...");
+        try {
+            await publicClient.waitForTransactionReceipt({
+                hash: mintTx,
+                timeout: 120_000, // 2 minutes timeout for testnet
+                pollingInterval: 2_000, // Check every 2 seconds
+            });
+            console.log("✅ Minted 1,000,000 USDC to deployer\n");
+        } catch (error) {
+            console.log("⚠️  Mint transaction may still be pending, continuing deployment...");
+            console.log("   You can check transaction status at: https://sepolia.mantlescan.xyz/tx/" + mintTx);
+            console.log("");
+        }
     } else {
         console.log("📌 Using USDC at:", usdcAddress, "\n");
     }
@@ -70,14 +87,26 @@ async function main() {
     // Add IdleStrategy to vault
     console.log("\n⚙️  Adding IdleStrategy to vault...");
     const strategyCap = parseUnits("1000000", 6); // 1M USDC cap
-    const addStrategyTx = await vault.write.addStrategy([idleStrategy.address, strategyCap]);
-    await publicClient.waitForTransactionReceipt({ hash: addStrategyTx });
+    const addStrategyTx = await vault.write.addStrategy([idleStrategy.address, strategyCap], {
+        account: deployer.account,
+    });
+    await publicClient.waitForTransactionReceipt({
+        hash: addStrategyTx,
+        timeout: 120_000,
+        pollingInterval: 2_000,
+    });
     console.log("✅ IdleStrategy added with cap: 1,000,000 USDC");
 
     // Set operator (same as deployer for now)
     console.log("\n⚙️  Setting operator...");
-    const setOperatorTx = await vault.write.setOperator([deployer.account.address]);
-    await publicClient.waitForTransactionReceipt({ hash: setOperatorTx });
+    const setOperatorTx = await vault.write.setOperator([deployer.account.address], {
+        account: deployer.account,
+    });
+    await publicClient.waitForTransactionReceipt({
+        hash: setOperatorTx,
+        timeout: 120_000,
+        pollingInterval: 2_000,
+    });
     console.log("✅ Operator set to:", deployer.account.address);
 
     // Summary
@@ -101,7 +130,7 @@ async function main() {
     // Save deployment info to file
     const deploymentInfo = {
         network: hre.network.name,
-        chainId: await publicClient.getChainId(),
+        chainId: Number(await publicClient.getChainId()),
         deployer: deployer.account.address,
         timestamp: new Date().toISOString(),
         contracts: {
@@ -111,8 +140,6 @@ async function main() {
         },
     };
 
-    const fs = await import("fs");
-    const path = await import("path");
     const deploymentsDir = path.join(process.cwd(), "deployments");
 
     if (!fs.existsSync(deploymentsDir)) {
@@ -131,6 +158,7 @@ async function main() {
 main()
     .then(() => process.exit(0))
     .catch((error) => {
+        console.error("❌ Deployment failed:");
         console.error(error);
         process.exit(1);
     });
